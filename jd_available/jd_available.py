@@ -13,14 +13,66 @@ id равен 860975.
 для установки библиотеки в Linux:
     sudo pip3 install pyglet
 
+Кроме того скрипт использует библиотеку PyQt4. В Ubuntu:
+    sudo apt-get install python3-pyqt4
+
 Вызов скрипта:
     python3 jd_available.py <id товара>
 '''
 
+import os
 import sys
 import http.client
 import pyglet
 import time
+
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4.QtWebKit import *
+from PyQt4.phonon import Phonon
+
+def achtung():
+    BASE_DIR = os.path.dirname(__file__)
+    a = pyglet.resource.media(os.path.join(BASE_DIR, 'achtung.wav'))
+    a.play()
+    pyglet.clock.schedule_once(lambda x: pyglet.app.exit(), a.duration)
+    pyglet.app.run()
+
+
+class App(QApplication):
+    def __init__(self, argv, url):
+        QApplication.__init__(self, argv)
+        self.url = url
+        self.n = 0
+        self._request_page()
+
+    def _request_page(self):
+        self.page = QWebPage(self)
+        self.page.loadFinished.connect(self._check_goods)
+        self.page.mainFrame().load(QUrl(self.url))
+
+    def _check_goods(self, result):
+        self.n += 1
+        print('Попытка:', self.n)
+        if result:
+            content = self.page.mainFrame().toHtml()
+            unavailable = '<span class="c-red off-sale-tip" style="display: inline;">unavailable</span>'
+            available = '<span class="c-red off-sale-tip">unavailable</span>'
+            if unavailable in content:
+                print('Товар НЕ доступен.')
+            elif available in content:
+                print('УРА. Товар доступен.')
+                print('Ссылка на товар:', site + page)
+                achtung()
+            else:
+                print('Нет информации о доступности товара.')
+                achtung()
+        else:
+            print('Нет ответа от JD.com.')
+            achtung()
+
+        QTimer.singleShot(5000, self._request_page)
+
 
 if len(sys.argv) < 2:
     print(help_text);
@@ -33,37 +85,5 @@ page = '/product/' + product_id + '.html'
 
 print('Ссылка на товар:', site + page)
 
-connection = http.client.HTTPConnection(site)
-
-def achtung():
-    a = pyglet.resource.media('achtung.wav')
-    a.play()
-    pyglet.clock.schedule_once(lambda x: pyglet.app.exit(), a.duration)
-    pyglet.app.run()
-
-n = 0
-while True:
-    n += 1
-    print('Попытка:', n)
-
-    connection.request('GET', page)
-
-    try:
-        response = connection.getresponse()
-    except http.client.HTTPException:
-        print('Что-то пошло не так.')
-        achtung()
-        continue
-
-    if response.status != 200:
-        print(response.status, response.reason)
-        achtung()
-        continue
-
-    content = response.read().decode('utf-8')
-
-    if 'unavailable' not in content:
-        print('Ура. Товар доступен.')
-        achtung()
-
-    time.sleep(5)
+app = App(sys.argv, 'http://' + site + page)
+app.exec_()
