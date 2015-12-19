@@ -25,6 +25,7 @@ import sys
 import http.client
 import pyglet
 import time
+import sip
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -44,16 +45,18 @@ class App(QApplication):
         QApplication.__init__(self, argv)
         self.url = url
         self.n = 0
+        self.page = QWebPage(self)
         self._request_page()
 
     def _request_page(self):
+        self.n += 1
+        print('Попытка:', self.n)
+        sip.delete(self.page)
         self.page = QWebPage(self)
         self.page.loadFinished.connect(self._check_goods)
         self.page.mainFrame().load(QUrl(self.url))
 
     def _check_goods(self, result):
-        self.n += 1
-        print('Попытка:', self.n)
         if result:
             content = self.page.mainFrame().toHtml()
             unavailable = '<span class="c-red off-sale-tip" style="display: inline;">unavailable</span>'
@@ -71,7 +74,7 @@ class App(QApplication):
             print('Нет ответа от JD.com.')
             achtung()
 
-        QTimer.singleShot(5000, self._request_page)
+        QTimer.singleShot(30000, self._request_page)
 
 
 if len(sys.argv) < 2:
