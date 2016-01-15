@@ -19,14 +19,24 @@ if len(sys.argv) != 2:
 ''' Анализирует файл filename и возвращает список строк, в которых
 определены прерывания. '''
 def get_interrupts_lines(filename):
+    patterns = (
+        '/* External Interrupts */',
+        'g_pfnVectors:',
+    )
     result = []
     with open(filename, 'r') as f:
         external_interrupts = False
         for line in f:
             line = line.strip()
 
-            if '/* External Interrupts */' in line:
-                external_interrupts = True
+            match = False
+            for pattern in patterns:
+                if pattern in line:
+                    external_interrupts = True
+                    match = True
+                    break
+
+            if match:
                 continue
 
             if external_interrupts and len(line) == 0:
