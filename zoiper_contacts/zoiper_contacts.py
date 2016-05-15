@@ -25,7 +25,7 @@ import datetime
 import shutil
 
 if len(sys.argv) == 1:
-    op = askopenfilename()
+    op = askopenfilename(filetypes=[("CSV-таблица","*.csv"),])
     if len(op) == 0:
         exit()
     filenames = []
