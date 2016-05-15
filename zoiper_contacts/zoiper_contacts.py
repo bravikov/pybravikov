@@ -51,13 +51,13 @@ time = datetime.datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
 backup = '{}_{}'.format(xmlfilename, time)
 shutil.copy(xmlfilename, backup)
 
-xmlfile = open(xmlfilename, 'w')
+xmlfile = open(xmlfilename, 'w', encoding='utf-8')
 
 xmlfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
 xmlfile.write('<contacts>\n')
 
 for filename in filenames:
-    with open(filename) as csvfile:
+    with open(filename, encoding='utf-8') as csvfile:
         content = csvfile.read()
         if len(content) == 0:
             continue
