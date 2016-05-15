@@ -1,29 +1,57 @@
 help_text='''
-Скрипт генерирует xml-файл контактов для программы Zoiper.
+Скрипт заменяет контакты в программе Zoiper контактами из CSV-файла.
+Для старых контактов создается резервная копия.
 
 В качестве аргументов принимаются файлы в формате CSV. Первая строка
 файла - заголовок. Заголовок может содержать следующие колонки: Имя,
 Отчество, Фамилия, Сотовый, Рабочий телефон, Домашний телефон. Регистр
 важен.
 
-В резульате скрипт создает файл Contacts.xml в текущей папке.
+Если вызвать скрипт без аргументов, то с помощью графического интерфейса
+будет запрощен файл.
 
-Если вызвать скрипт без аргументов, то будет выведена эта справка.
+Вызов скрипта с аргументов -h или --help дает справку.
 
-Вызов скрипта:
-    python3 zoiper_contacts.py [файл...]
+Работает в операционных системах Linux и Windows 7 и старше.
+
+Синтаксис вызова скрипта:
+    python3 zoiper_contacts.py [-h|--help] [файл...]
 '''
 
 import sys
 import csv
+from tkinter.filedialog import *
+import datetime
+import shutil
 
-if len(sys.argv) < 2:
-    print(help_text);
-    exit()
+if len(sys.argv) == 1:
+    op = askopenfilename()
+    if len(op) == 0:
+        exit()
+    filenames = []
+    filenames.append(op)
+else:
+    a1 = sys.argv[1]
+    if a1 == '--help' or a1 == '-h':
+        print(help_text)
+        exit()
+    filenames=sys.argv[1:]
 
-filenames=sys.argv[1:]
+if sys.platform == 'linux':
+    zoiper_dir = os.path.join(os.getenv('HOME'), '.Zoiper')
+elif sys.platform == 'win32':
+    zoiper_dir = os.path.join(os.getenv('APPDATA'), 'Zoiper')
+else:
+    zoiper_dir = ''
 
-xmlfile = open('Contacts.xml', 'w')
+xmlfilename = os.path.join(zoiper_dir, 'Contacts.xml')
+
+# Сделать резервную копию.
+time = datetime.datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
+backup = '{}_{}'.format(xmlfilename, time)
+shutil.copy(xmlfilename, backup)
+
+xmlfile = open(xmlfilename, 'w')
 
 xmlfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
 xmlfile.write('<contacts>\n')
